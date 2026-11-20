@@ -67,3 +67,13 @@ An earlier read from the administration host stopped because the test configurat
 4. Remove the test object with `rados rm`. Confirm a fresh `rados stat` on the other VM reports that the object is absent.
 
 A verified cross-VM read demonstrates that both clients reach the same object. The acting set and OSD tree show where the object’s placement group is served. [RADOS CLI](https://docs.ceph.com/en/squid/man/8/rados/) · [Ceph architecture](https://docs.ceph.com/en/squid/architecture/)
+
+## 20 November 2026 — RADOS Gateway startup
+
+Cephadm initially reported no RGW service. A single `rgw.thesis-lab` daemon was deployed on VM 2 using the Beast frontend and HTTP port `8080`, bound to the private VM network. The daemon reported `running` on Ceph Squid 19.2.3.
+
+Before deployment, VM 2 reported 3.8 GiB total guest RAM and 2.6 GiB available. The first Cephadm status sample reported `72.0M` memory use for the gateway. These are startup observations. Sustained load and peak memory usage are pending measurement.
+
+An unsigned `GET /` returned `HTTP/1.1 200 OK` with the Ceph Object Gateway server header, S3 `ListAllMyBucketsResult` XML, and an empty bucket list for owner `anonymous`. That establishes that the HTTP frontend is reachable and processed the request as anonymous. A signed bucket creation and object round trip are still pending.
+
+Source: lab terminal output from 20 November 2026. [Ceph Squid RGW deployment](https://docs.ceph.com/en/squid/cephadm/services/rgw/) · [S3 authentication](https://docs.ceph.com/en/squid/radosgw/s3/authentication/)
