@@ -49,7 +49,13 @@ Source for the observed results: terminal output from the lab run on 20 November
 
 ### Native RADOS across the two VMs
 
-**Fresh run:** `cross-vm-run02` in `thesis-rados-lab`. Results are pending.
+**Run 02:** `cross-vm-run02` in `thesis-rados-lab`. The cross-VM read and overwrite checks passed. VM 2 verified version 1 with `cmp`. VM 1 then verified the exact version 2 bytes written by VM 2. Deletion and the subsequent lookup remain pending.
+
+At OSD map epoch `263`, the object mapped to placement group `5.9`. The up and acting sets both listed `[5,1]`. `osd.5` on VM 2 was the primary and `osd.1` on VM 1 was the replica.
+
+```text
+osdmap e263 pool 'thesis-rados-lab' (5) object 'cross-vm-run02' -> pg 5.dcadc69 (5.9) -> up ([5,1], p5) acting ([5,1], p5)
+```
 
 **Previous attempt:** VM 2 retrieved the version 1 payload written on VM 1 from `cross-vm-run01`. VM 2 then ran `rados put` for version 2 and the terminal showed no write error. The return read, placement and deletion remain unverified for that attempt.
 
