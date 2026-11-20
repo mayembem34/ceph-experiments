@@ -130,3 +130,18 @@ flowchart TB
 `stat` supplied the inode and byte count. The `ceph.file.layout` extended attribute identified the pool and layout. The initial RADOS object name combines the hexadecimal inode with object index zero. `rados stat` verified the object existed with the same byte count. `ceph osd map` showed the placement group and its acting OSDs, and the baseline OSD tree identified their hosts.
 
 Source: lab terminal output from 20 November 2026. [CephFS architecture](https://docs.ceph.com/en/squid/cephfs/) · [CephFS I/O path](https://docs.ceph.com/en/squid/cephfs/cephfs-io-path/) · [CephFS layouts](https://docs.ceph.com/en/squid/cephfs/file-layouts/)
+
+## 20 November 2026 — OSD storage backend
+
+All four OSDs reported BlueStore in `ceph osd metadata`.
+
+| Storage host | OSDs | Backend |
+| --- | --- | --- |
+| VM 1 | `osd.0`, `osd.1` | BlueStore |
+| VM 2 | `osd.4`, `osd.5` | BlueStore |
+
+On VM 2, `osd.5` had a `block` symlink to an LVM logical volume. The directory inspection showed no separate `block.db` or `block.wal` link, so its BlueStore database and write-ahead log share its main block device. This inspection covered `osd.5`, the primary observed in both placement traces.
+
+BlueStore manages object data directly on its block device and uses RocksDB, supported by BlueFS, for OSD-local metadata. CephFS namespace metadata lives in a separate RADOS pool and serves a different role. FileStore used a host filesystem for object data. Its support ended with Reef.
+
+Source: lab terminal output from 20 November 2026. [BlueStore devices](https://docs.ceph.com/en/squid/rados/configuration/bluestore-config-ref/) · [BlueStore migration](https://docs.ceph.com/en/squid/rados/operations/bluestore-migration/)
