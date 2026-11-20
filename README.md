@@ -101,3 +101,32 @@ Source: lab terminal output from 20 November 2026. [Ceph Squid RGW deployment](h
 This check demonstrates authenticated cluster monitoring through the manager API. The preceding S3 experiment demonstrates object I/O through RADOS Gateway.
 
 Source: lab terminal output from 20 November 2026. [Ceph Squid REST API](https://docs.ceph.com/en/squid/mgr/ceph_api/)
+
+## 20 November 2026 — CephFS file to RADOS object
+
+The CephFS service showed one active MDS and one standby. The administration host restored its kernel mount of the scoped CephFS subdirectory before creating the test file.
+
+| Observation | Value |
+| --- | --- |
+| Filesystem metadata pool | `cephfs.cephfs.meta` |
+| File data pool | `cephfs.cephfs.data` |
+| File size and inode | 22 bytes, inode `1099511627786` |
+| File layout | `stripe_unit=4194304 stripe_count=1 object_size=4194304` |
+| First RADOS data object | `1000000000a.00000000` |
+| RADOS stat result | 22 bytes |
+| Placement group and OSD map epoch | `3.a2`, epoch `373` |
+| Up and acting sets | `[5,0]`, primary `osd.5` on VM 2, replica `osd.0` on VM 1 |
+
+```mermaid
+flowchart TB
+    FILE["CephFS pathname"] --> MDS["MDS resolves the inode and layout"]
+    MDS --> META["Metadata pool cephfs.cephfs.meta"]
+    MDS --> OBJECT["Client maps file data to 1000000000a.00000000"]
+    OBJECT --> PG["Data pool PG 3.a2"]
+    PG --> PRIMARY["osd.5 primary on VM 2"]
+    PG --> REPLICA["osd.0 replica on VM 1"]
+```
+
+`stat` supplied the inode and byte count. The `ceph.file.layout` extended attribute identified the pool and layout. The initial RADOS object name combines the hexadecimal inode with object index zero. `rados stat` verified the object existed with the same byte count. `ceph osd map` showed the placement group and its acting OSDs, and the baseline OSD tree identified their hosts.
+
+Source: lab terminal output from 20 November 2026. [CephFS architecture](https://docs.ceph.com/en/squid/cephfs/) · [CephFS I/O path](https://docs.ceph.com/en/squid/cephfs/cephfs-io-path/) · [CephFS layouts](https://docs.ceph.com/en/squid/cephfs/file-layouts/)
