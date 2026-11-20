@@ -43,9 +43,11 @@ sudo findmnt -T "$mon_dir"
 
 Source for the observed results: terminal output from the lab run on 20 November 2026.
 
-### Next experiment — Native RADOS across the two VMs
+### Native RADOS across the two VMs
 
-**Status:** Planned. No object operation output has been recorded for this run.
+**Status:** In progress. VM 2 retrieved the version 1 payload written on VM 1 from `cross-vm-run01` in `thesis-rados-lab`. VM 2 then ran `rados put` for version 2 and the terminal showed no write error. Reading version 2 from VM 1, recording placement, and verifying deletion remain open.
+
+An earlier read from the administration host stopped because the test configuration file was unavailable inside the Cephadm container. The read from VM 2 succeeded with the local lab directory mounted into the container.
 
 1. Create a dedicated replicated test pool. Confirm the CRUSH rule selects different hosts and the test pool’s placement groups become `active+clean`. Use a pool-scoped CephX identity on both VMs.
 2. Write a synthetic payload with `rados put` on VM 1. Retrieve it with `rados get` on VM 2 and check the bytes. Overwrite it on VM 2 and verify the replacement bytes on VM 1.
