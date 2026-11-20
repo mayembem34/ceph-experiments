@@ -188,3 +188,16 @@ Throughput fell substantially after the first four seconds. The Mint host report
 The available evidence shows a short period of memory stalls. It leaves the cause of the throughput drop unresolved. Concurrent `vmstat` interval rows were absent from the supplied output, and the Cephadm daemon statistics reported a three-minute refresh age. The run therefore provides no direct measurement of OSD peak memory or active swapping during the slowdown.
 
 Source: lab terminal output from 20 November 2026. [RADOS benchmarking](https://docs.ceph.com/en/squid/man/8/rados/) · [Linux pressure stall information](https://docs.kernel.org/accounting/psi.html)
+
+## 20 November 2026 — Effective OSD memory targets
+
+The lab queried each live daemon with `ceph config show-with-defaults osd.<id>` on Ceph Squid 19.2.3.
+
+| Host | OSDs | Target per OSD | Target source | Autotune |
+| --- | --- | ---: | --- | --- |
+| VM 1 | `osd.0`, `osd.1` | 4,294,967,296 bytes (4 GiB) | `default` | `true` via `mon` |
+| VM 2 | `osd.4`, `osd.5` | 1,666,308,096 bytes (1.55 GiB) | `mon` | `true` via `mon` |
+
+Both guests report 3.8 GiB of RAM. Each of VM 1’s default OSD targets exceeds its guest’s total RAM. BlueStore uses the target to guide memory tuning. The value measures neither allocated RAM nor a hard process limit. VM 2’s smaller value comes from the monitor configuration. The effective settings alone do not show why VM 1 still uses the default. The next check compares the orchestrator’s host inventory and the stored memory settings. The existing samples leave the effect of these targets under sustained load unmeasured.
+
+Source: lab terminal output from 20 November 2026. [Ceph Squid OSD autotuning](https://docs.ceph.com/en/squid/cephadm/services/osd/#automatically-tuning-osd-memory) · [BlueStore memory configuration](https://docs.ceph.com/en/squid/rados/configuration/bluestore-config-ref/#automatic-cache-sizing)
