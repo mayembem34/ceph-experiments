@@ -8,10 +8,14 @@ Lab notes for a Ceph Squid cluster running on one Linux laptop and two Ubuntu VM
 
 The cephadm container reported Ceph Squid `v19.2.3`. The laptop and both VMs each ran a monitor. All three monitors were in quorum. The manager and CephFS metadata server each had one standby.
 
-| Storage host | OSDs | Observed state |
-| --- | --- | --- |
-| VM 1 | `osd.0`, `osd.1` | Both up and in |
-| VM 2 | `osd.4`, `osd.5` | Both up and in |
+Each Ubuntu VM has three virtual disks. One holds the operating system and two are dedicated to Ceph, with one OSD per Ceph disk.
+
+| Storage host | OS disks | Dedicated Ceph disks | OSDs observed up and in |
+| --- | ---: | ---: | --- |
+| VM 1 | 1 | 2 | `osd.0`, `osd.1` |
+| VM 2 | 1 | 2 | `osd.4`, `osd.5` |
+
+Disk layout confirmed by the lab operator. OSD state comes from the cluster baseline.
 
 All 305 placement groups were `active+clean` across four pools. Ceph reported approximately 80 GiB of raw OSD capacity available. The two VMs share a single physical laptop, so this lab has two logical OSD hosts in one physical failure domain.
 
@@ -21,7 +25,7 @@ The baseline showed `HEALTH_WARN` with `MON_DISK_LOW` on VM 2. Ceph reported 23%
 
 After a reported 14 GB expansion of the VM system storage, `ceph health detail` returned **`HEALTH_OK`**. The final ext4 filesystem size was not captured in the supplied evidence.
 
-The monitor warning and the cluster’s raw storage figure measure different filesystems or devices. The monitor warning concerns its local database filesystem. The raw OSD figure describes capacity across cluster storage devices. [Ceph Squid health checks](https://docs.ceph.com/en/squid/rados/operations/health-checks/#mon-disk-low)
+The monitor database on VM 2 uses the OS disk. The raw OSD capacity describes the dedicated Ceph disks across both VMs. [Ceph Squid health checks](https://docs.ceph.com/en/squid/rados/operations/health-checks/#mon-disk-low)
 
 Commands used to capture the baseline on the administration host:
 
@@ -45,11 +49,13 @@ Source for the observed results: terminal output from the lab run on 20 November
 
 ### Native RADOS across the two VMs
 
-**Status:** In progress. VM 2 retrieved the version 1 payload written on VM 1 from `cross-vm-run01` in `thesis-rados-lab`. VM 2 then ran `rados put` for version 2 and the terminal showed no write error. Reading version 2 from VM 1, recording placement, and verifying deletion remain open.
+**Fresh run:** `cross-vm-run02` in `thesis-rados-lab`. Results are pending.
+
+**Previous attempt:** VM 2 retrieved the version 1 payload written on VM 1 from `cross-vm-run01`. VM 2 then ran `rados put` for version 2 and the terminal showed no write error. The return read, placement and deletion remain unverified for that attempt.
 
 An earlier read from the administration host stopped because the test configuration file was unavailable inside the Cephadm container. The read from VM 2 succeeded with the local lab directory mounted into the container.
 
-1. Create a dedicated replicated test pool. Confirm the CRUSH rule selects different hosts and the test pool’s placement groups become `active+clean`. Use a pool-scoped CephX identity on both VMs.
+1. Reuse the dedicated replicated test pool and pool-scoped CephX identity on both VMs. Confirm the CRUSH rule selects different hosts and the test pool’s placement groups are `active+clean`.
 2. Write a synthetic payload with `rados put` on VM 1. Retrieve it with `rados get` on VM 2 and check the bytes. Overwrite it on VM 2 and verify the replacement bytes on VM 1.
 3. While the object exists, run `ceph osd map POOL OBJECT`. Record the placement group and acting OSD IDs. Use `ceph osd tree` to verify which host serves each copy.
 4. Remove the test object with `rados rm`. Confirm a fresh `rados stat` on the other VM reports that the object is absent.
