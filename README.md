@@ -88,3 +88,16 @@ The signed S3 round trip passed using curl with AWS Signature Version 4 and a de
 | Delete bucket | HTTP 204 |
 
 Source: lab terminal output from 20 November 2026. [Ceph Squid RGW deployment](https://docs.ceph.com/en/squid/cephadm/services/rgw/) · [S3 authentication](https://docs.ceph.com/en/squid/radosgw/s3/authentication/)
+
+## 20 November 2026 — Dashboard management API
+
+`ceph mgr services` advertised an HTTPS Dashboard endpoint on the active manager on VM 1. After HTTPS server verification by public-key pin and Dashboard authentication, the API returned these results:
+
+| Endpoint | Observed result |
+| --- | --- |
+| `GET /api/health/minimal` | `HEALTH_OK` |
+| `GET /api/osd` | Four OSD entries |
+
+This check demonstrates authenticated cluster monitoring through the manager API. The preceding S3 experiment demonstrates object I/O through RADOS Gateway.
+
+Source: lab terminal output from 20 November 2026. [Ceph Squid REST API](https://docs.ceph.com/en/squid/mgr/ceph_api/)
