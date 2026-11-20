@@ -74,6 +74,17 @@ Cephadm initially reported no RGW service. A single `rgw.thesis-lab` daemon was 
 
 Before deployment, VM 2 reported 3.8 GiB total guest RAM and 2.6 GiB available. The first Cephadm status sample reported `72.0M` memory use for the gateway. These are startup observations. Sustained load and peak memory usage are pending measurement.
 
-An unsigned `GET /` returned `HTTP/1.1 200 OK` with the Ceph Object Gateway server header, S3 `ListAllMyBucketsResult` XML, and an empty bucket list for owner `anonymous`. That establishes that the HTTP frontend is reachable and processed the request as anonymous. A signed bucket creation and object round trip are still pending.
+An unsigned `GET /` returned `HTTP/1.1 200 OK` with the Ceph Object Gateway server header, S3 `ListAllMyBucketsResult` XML, and an empty bucket list for owner `anonymous`. That establishes that the HTTP frontend is reachable and processed the request as anonymous.
+
+The signed S3 round trip passed using curl with AWS Signature Version 4 and a dedicated RGW test user.
+
+| Check | Result |
+| --- | --- |
+| Create bucket | HTTP 200 |
+| Upload object | HTTP 200 |
+| Download object | HTTP 200 |
+| Compare original and downloaded payload with `cmp` | Exact byte match |
+| Delete object | HTTP 204 |
+| Delete bucket | HTTP 204 |
 
 Source: lab terminal output from 20 November 2026. [Ceph Squid RGW deployment](https://docs.ceph.com/en/squid/cephadm/services/rgw/) · [S3 authentication](https://docs.ceph.com/en/squid/radosgw/s3/authentication/)
