@@ -169,3 +169,22 @@ Memory PSI `some` and `full` averages displayed `0.00` on all three hosts. The f
 `orch ps` reported its daemon data was about eight minutes old. The next measurement should capture memory stalls, swap rates and daemon usage during a bounded workload. Check the effective OSD memory targets before deciding whether to tune them.
 
 Source: lab terminal output from 20 November 2026. [Linux memory pressure](https://docs.kernel.org/accounting/psi.html) · [Ceph Squid OSD memory tuning](https://docs.ceph.com/en/squid/cephadm/services/osd/#automatically-tuning-osd-memory)
+
+## 20 November 2026 — Bounded RADOS write test
+
+The benchmark used a fresh namespace in `thesis-rados-lab` with four concurrent writes, 1 MiB objects, and bounds of 45 seconds or 512 objects. It reached the object cap in 14.97 seconds and reported deleting all 512 benchmark objects during cleanup.
+
+| Metric | Result |
+| --- | ---: |
+| Logical data written | 512 MiB |
+| Average write throughput | 34.20 MiB/s |
+| Reported interval throughput range | 5–91 MiB/s |
+| Mean write latency | 117 ms |
+| Maximum write latency | 1.123 s |
+| Benchmark cleanup time | 3.28 s |
+
+Throughput fell substantially after the first four seconds. The Mint host reported 9.0 GiB of available RAM and 1.8 GiB of swap occupied after the run, compared with 8.9 GiB available and the same displayed swap usage at baseline. Post-run memory PSI `avg10` was `0.23` for `some` and `0.11` for `full`, expressed as percentages.
+
+The available evidence shows a short period of memory stalls. It leaves the cause of the throughput drop unresolved. Concurrent `vmstat` interval rows were absent from the supplied output, and the Cephadm daemon statistics reported a three-minute refresh age. The run therefore provides no direct measurement of OSD peak memory or active swapping during the slowdown.
+
+Source: lab terminal output from 20 November 2026. [RADOS benchmarking](https://docs.ceph.com/en/squid/man/8/rados/) · [Linux pressure stall information](https://docs.kernel.org/accounting/psi.html)
