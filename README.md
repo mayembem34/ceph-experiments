@@ -145,3 +145,27 @@ On VM 2, `osd.5` had a `block` symlink to an LVM logical volume. The directory i
 BlueStore manages object data directly on its block device and uses RocksDB, supported by BlueFS, for OSD-local metadata. CephFS namespace metadata lives in a separate RADOS pool and serves a different role. FileStore used a host filesystem for object data. Its support ended with Reef.
 
 Source: lab terminal output from 20 November 2026. [BlueStore devices](https://docs.ceph.com/en/squid/rados/configuration/bluestore-config-ref/) · [BlueStore migration](https://docs.ceph.com/en/squid/rados/operations/bluestore-migration/)
+
+## 20 November 2026 — Idle memory baseline
+
+Measurements were taken without a deliberate Ceph workload while normal desktop applications were open on the host.
+
+| Node | Total RAM | Available RAM | Swap used / total |
+| --- | ---: | ---: | ---: |
+| Mint host | 23 GiB | 8.9 GiB | 1.8 GiB / 2.0 GiB |
+| VM 1 | 3.8 GiB | 1.6 GiB | 0 B / no swap configured |
+| VM 2 | 3.8 GiB | 2.4 GiB | 268 KiB / 2.8 GiB |
+
+Memory PSI `some` and `full` averages displayed `0.00` on all three hosts. The four interval readings after the first `vmstat` report had `si=0` and `so=0` on each host. The host retained 1.8 GiB in swap, with no active swap traffic in the sampled intervals. The two QEMU processes showed about 3.9 GiB RSS each and topped the host process list. Browser processes were the next largest individual host entries. Guest memory is represented within the host’s VM processes, and RSS values may include shared pages.
+
+| Cephadm observation | Reported value |
+| --- | --- |
+| Largest Ceph daemon in `MEM USE` | Active manager on VM 1, `696M` |
+| Monitor `MEM USE` | `435M` to `453M` |
+| OSD `MEM USE` | `112M` to `118M` per daemon |
+| RGW `MEM USE` | `128M` |
+| OSD `MEM LIM` as displayed | `4096M` each on VM 1 and `1589M` each on VM 2 |
+
+`orch ps` reported its daemon data was about eight minutes old. The next measurement should capture memory stalls, swap rates and daemon usage during a bounded workload. Check the effective OSD memory targets before deciding whether to tune them.
+
+Source: lab terminal output from 20 November 2026. [Linux memory pressure](https://docs.kernel.org/accounting/psi.html) · [Ceph Squid OSD memory tuning](https://docs.ceph.com/en/squid/cephadm/services/osd/#automatically-tuning-osd-memory)
